@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>Your Friend Codey</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Azeret+Mono:wght@300;400&family=K2D:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper:      #FFFCF0;
+      --paper-back: #EEE5CE;
+      --line:       #E8DBBF;
+      --ink:        #2C2416;
+      --ink-dim:    #7A6A50;
+      --binding:    #C8B89A;
+      --accent:     #E07A3A;
+      --accent2:    #5B8FBA;
+      --check:      #4CAF7A;
+      --shadow:     rgba(44,36,22,0.15);
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      min-height: 100dvh;
+      background-color: #EAF7F9;
+      background-image:
+        linear-gradient(rgba(175, 148, 148, 0.28) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(175, 148, 148, 0.28) 1px, transparent 1px);
+      background-size: 100px 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 36px;
+      font-family: 'Instrument Sans', sans-serif;
+      color: var(--ink);
+    }
+
+    /* ── Splash screen ── */
+    #splash {
+      position: fixed;
+      inset: 0;
+      background-color: #EAF7F9;
+      background-image:
+        linear-gradient(rgba(175, 148, 148, 0.28) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(175, 148, 148, 0.28) 1px, transparent 1px);
+      background-size: 100px 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 32px;
+      text-align: center;
+      transition: opacity 0.6s ease;
+    }
+    #splash.fade-out { opacity: 0; pointer-events: none; }
+    .splash-logo {
+      margin-bottom: 32px;
+    }
+    .splash-logo img {
+      width: 150px;
+      height: auto;
+      display: block;
+    }
+    .splash-title {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: clamp(24px, 6vw, 34px);
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+    .splash-sub {
+      font-size: 16px;
+      color: var(--ink-dim);
+      line-height: 1.5;
+      max-width: 320px;
+    }
+
+    /* ── API key bar ── */
+    .key-bar {
+      width: 100%;
+      max-width: 420px;
+      background: #FFF8E0;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: var(--ink-dim);
+    }
+    .key-bar.hidden { display: none; }
+    .key-bar input {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: 12px;
+      font-family: 'Instrument Sans', sans-serif;
+      background: white;
+      color: var(--ink);
+      outline: none;
+      min-width: 0;
+    }
+    .key-bar input:focus { border-color: var(--accent2); }
+    .key-bar button {
+      padding: 5px 12px;
+      border-radius: 4px;
+      background: var(--accent2);
+      color: white;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'Instrument Sans', sans-serif;
+    }
+    .key-set-row {
+      width: 100%;
+      max-width: 420px;
+      text-align: right;
+      margin-bottom: 8px;
+    }
+    .key-set-row button {
+      background: none;
+      border: none;
+      font-size: 11px;
+      color: var(--binding);
+      cursor: pointer;
+      font-family: 'Instrument Sans', sans-serif;
+      padding: 2px 0;
+    }
+    .key-set-row button:hover { color: var(--ink-dim); }
+
+    /* ── Logo ── */
+    img.logo {
+      width: 150px;
+      height: auto;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    /* ── Notepad shell ── */
+    .notepad {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      /* box-shadow instead of filter:drop-shadow — filter flattens all 3D child transforms */
+      box-shadow:
+        0 1px 0 var(--line),
+        0 2px 0 #EFE9D6,
+        0 3px 0 var(--line),
+        0 4px 0 #EFE9D6,
+        0 14px 28px var(--shadow),
+        0 3px 8px rgba(44,36,22,0.08);
+    }
+
+    /* Top spiral binding */
+    .binding {
+      background: var(--binding);
+      border-radius: 4px 4px 0 0;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 16px;
+      position: relative;
+      z-index: 20;
+      flex-shrink: 0;
+      overflow: hidden;
+      justify-content: center;
+    }
+    .hidden { display: none !important; }
+    .hole {
+      width: 13px;
+      height: 13px;
+      background: #D4EEF1;
+      border-radius: 50%;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+
+    /* ── 3-D perspective container ── */
+    .pages-wrap {
+      position: relative;
+      height: min(520px, calc(100dvh - 175px));
+      perspective: 900px;
+      perspective-origin: 90% 100%;
+      /* overflow kept off — clips 3D mid-flip */
+      border-radius: 0 0 4px 4px;
+      touch-action: pan-y;
+    }
+
+    /* ── Individual pages ── */
+    .page {
+      position: absolute;
+      inset: 0;
+      transform-origin: top center;
+      transform-style: preserve-3d;
+      border-radius: 0 0 4px 4px;
+    }
+
+    /* ── Page face (front) ── */
+    .page-face {
+      position: absolute;
+      inset: 0;
+      background: var(--paper);
+      display: flex;
+      flex-direction: column;
+      border-radius: 0 0 4px 4px;
+      overflow: hidden;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    /* ── Page back face ── */
+    .page-back {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, var(--paper-back) 0%, #D8CAAA 100%);
+      border-radius: 0 0 4px 4px;
+      transform: rotateX(180deg);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      pointer-events: none;
+      box-shadow: inset 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    /* ── Page states ── */
+    .page[data-state="current"] { z-index: 2; transform: rotateX(0deg); }
+    .page[data-state="under"]   { z-index: 1; transform: rotateX(0deg); }
+    .page[data-state="flipped"] { z-index: 0; transform: rotateX(-180deg); }
+
+    /* ── Flip animations ── */
+    .page.flip-out {
+      z-index: 3 !important;
+      animation: kFlipOut 0.65s cubic-bezier(0.45,0,0.55,1) forwards;
+    }
+    @keyframes kFlipOut {
+      0%   { transform: rotateX(0deg); }
+      100% { transform: rotateX(-180deg); }
+    }
+    /* ── Dissolve-back animation ── */
+    .page.dissolve-out {
+      z-index: 3 !important;
+    }
+    .page.dissolve-out .page-face {
+      animation: kDissolveOut 0.4s ease forwards;
+    }
+    @keyframes kDissolveOut {
+      0%   { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.96); }
+    }
+
+    /* ── Page layout ── */
+    .page-body {
+      flex: 1;
+      padding: 26px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .has-story .page-body { padding-top: 18px; }
+
+    /* ── Story bar ── */
+    .story-bar {
+      font-size: 10.5px;
+      color: var(--ink-dim);
+      line-height: 1.6;
+      padding: 12px 24px 10px;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .story-bar:empty { display: none; }
+    .story-bar strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    /* Welcome — page 0 only */
+    .welcome-title {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 3px;
+    }
+    .welcome-sub {
+      font-size: 12px;
+      color: var(--ink-dim);
+      margin-bottom: 20px;
+    }
+
+    .question {
+      font-family: 'K2D', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .hint {
+      font-size: 13px;
+      color: var(--ink-dim);
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+    .audience-note {
+      font-size: 12px;
+      color: var(--accent);
+      margin-bottom: 14px;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 16px;
+      color: var(--ink);
+      resize: none;
+      padding: 2px 0 8px;
+      line-height: 1.6;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    textarea:focus, input:focus { border-bottom-color: var(--accent); }
+    textarea::placeholder, input::placeholder { color: var(--binding); }
+    input[type="text"] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    textarea { flex: 1; min-height: 80px; }
+    .textarea-wrap { flex: 1; position: relative; display: flex; flex-direction: column; min-height: 0; }
+    .textarea-wrap textarea { flex: 1; }
+    .fake-placeholder {
+      position: absolute;
+      top: 2px; left: 0; right: 0;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 14px;
+      color: var(--binding);
+      pointer-events: none;
+      line-height: 1.75;
+    }
+    .ph-line {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 14px;
+      margin-top: auto;
+    }
+    .chip {
+      cursor: pointer;
+      padding: 7px 15px;
+      border-radius: 99px;
+      border: 2px solid var(--line);
+      background: var(--paper);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 16px;
+      color: var(--ink-dim);
+      transition: all 0.12s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .chip:active { transform: scale(0.94); }
+    .chip.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .chip.sel-blue { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+
+    /* ── Loading state ── */
+    .loading-q {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .loading-q p {
+      font-size: 13px;
+      color: var(--binding);
+    }
+    .dots-anim {
+      display: flex;
+      gap: 6px;
+    }
+    .dots-anim span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--binding);
+      animation: blink 1.2s infinite ease-in-out;
+    }
+    .dots-anim span:nth-child(2) { animation-delay: 0.2s; }
+    .dots-anim span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+      40%            { transform: scale(1);   opacity: 1; }
+    }
+
+    /* Swipe hint */
+    .swipe-hint {
+      font-size: 11px;
+      color: var(--binding);
+      text-align: left;
+      padding: 8px 24px 14px 12px;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+
+    /* ── Fold corner Next button ── */
+    .fold-btn {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 80px;
+      height: 80px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+      z-index: 5;
+      -webkit-tap-highlight-color: transparent;
+      transition: width 0.16s, height 0.16s;
+    }
+    .fold-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--paper-back);
+      clip-path: polygon(100% 0%, 100% 100%, 0% 100%);
+      box-shadow: -4px -4px 12px rgba(0,0,0,0.10);
+    }
+    .fold-btn::after {
+      content: '→';
+      position: absolute;
+      bottom: 16px;
+      right: 18px;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .fold-btn:active { width: 92px; height: 92px; }
+    .fold-btn.generate::after { color: var(--accent2); }
+    .fold-btn:disabled { opacity: 0.3; pointer-events: none; }
+
+    /* ── Output page ── */
+    .out-body {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 24px 24px 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .out-title {
+      font-family: 'K2D', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+    .out-sub {
+      font-size: 13px;
+      color: var(--ink-dim);
+      margin-bottom: 14px;
+    }
+    .quality-toast {
+      background: #FFF8E0;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 9px 12px;
+      font-size: 12px;
+      color: var(--ink-dim);
+      line-height: 1.45;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 7px;
+      align-items: flex-start;
+      flex-shrink: 0;
+    }
+    .quality-toast span { flex: 1; }
+    .edit-hint {
+      position: absolute;
+      top: 10px;
+      right: 46px;
+      font-family: 'Azeret Mono', monospace;
+      font-size: 9px;
+      color: rgba(245, 239, 216, 0.28);
+      pointer-events: none;
+      user-select: none;
+      letter-spacing: 0.04em;
+    }
+    #generatedPrompt[contenteditable] { cursor: text; outline: none; }
+    #generatedPrompt[contenteditable]:focus { color: rgba(245, 239, 216, 0.9); }
+    .prompt-wrap {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .prompt-box {
+      background: #2C2416;
+      border-radius: 4px;
+      padding: 16px;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      min-height: 0;
+    }
+    .prompt-box pre {
+      font-family: 'Azeret Mono', monospace;
+      font-weight: 300;
+      font-size: 10px;
+      color: rgba(245, 239, 216, 0.7);
+      white-space: pre-wrap;
+      line-height: 1.55;
+      padding-bottom: 48px;
+    }
+    .copy-icon-btn {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      z-index: 10;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      color: #F5EFD8;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .copy-icon-btn:active { background: rgba(255,255,255,0.25); }
+    .copy-icon-btn .copy-check { display: none; }
+    .copy-icon-btn.copied svg:first-of-type { display: none; }
+    .copy-icon-btn.copied .copy-check { display: block; color: #7ED47E; }
+    .tips-box {
+      background: #FFF8E0;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .tips-title {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+    .tip {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ink-dim);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .tip:last-child { margin-bottom: 0; }
+    .tip-badge {
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--accent2);
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 99px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .btn-restart {
+      width: 100%;
+      padding: 11px;
+      border-radius: 4px;
+      background: transparent;
+      border: 2px solid var(--line);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-dim);
+      cursor: pointer;
+      margin-bottom: 20px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-restart:active { opacity: 0.7; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Splash ── -->
+  <div id="splash">
+    <div class="splash-logo"><img src="yourfriendcodey.svg" alt="Your Friend Codey" /></div>
+    <div class="splash-sub">Turn your idea into a prompt that actually builds.</div>
+  </div>
+
+  <!-- ── Main app ── -->
+  <div id="app" style="display:none; flex-direction:column; align-items:center; width:100%">
+
+    <!-- API key bar -->
+    <div class="key-bar" id="keyBar">
+      <span style="white-space:nowrap">Claude API key</span>
+      <input type="password" id="keyInput" placeholder="sk-ant-api03-..." />
+      <button onclick="saveKey()">Save</button>
+    </div>
+    <div class="key-set-row hidden" id="keySetRow">
+      <button onclick="clearKey()">✕ clear API key</button>
+    </div>
+
+    <img src="yourfriendcodey.svg" alt="Your Friend Codey" class="logo" />
+
+    <div class="notepad">
+      <div class="binding" id="binding"></div>
+
+      <div class="pages-wrap" id="pagesWrap">
+
+        <!-- Page 0: Q1 — always static -->
+        <div class="page" id="p-0" data-page="0">
+          <div class="page-face">
+            <div class="page-body">
+              <div class="question">What's the big idea?</div>
+              <div class="hint">Describe it like you're telling a friend over coffee.</div>
+              <div class="textarea-wrap">
+                <textarea id="a-0"></textarea>
+                <div class="fake-placeholder" id="fakePH" aria-hidden="true"></div>
+              </div>
+            </div>
+            <button class="fold-btn" id="fold-0" onclick="handleNext(0)" aria-label="Next page"></button>
+          </div>
+          <div class="page-back"></div>
+        </div>
+
+        <!-- Pages 1–3: dynamic question slots -->
+        <div class="page" id="p-1" data-page="1">
+          <div class="page-face">
+            <div class="story-bar" id="story-1"></div>
+            <div class="page-body" id="pb-1">
+              <div class="loading-q"><div class="dots-anim"><span></span><span></span><span></span></div></div>
+            </div>
+            <div class="swipe-hint">← swipe to go back</div>
+            <button class="fold-btn" id="fold-1" onclick="handleNext(1)" aria-label="Next page"></button>
+          </div>
+          <div class="page-back"></div>
+        </div>
+
+        <div class="page" id="p-2" data-page="2">
+          <div class="page-face">
+            <div class="story-bar" id="story-2"></div>
+            <div class="page-body" id="pb-2">
+              <div class="loading-q"><div class="dots-anim"><span></span><span></span><span></span></div></div>
+            </div>
+            <div class="swipe-hint">← swipe to go back</div>
+            <button class="fold-btn" id="fold-2" onclick="handleNext(2)" aria-label="Next page"></button>
+          </div>
+          <div class="page-back"></div>
+        </div>
+
+        <div class="page" id="p-3" data-page="3">
+          <div class="page-face">
+            <div class="story-bar" id="story-3"></div>
+            <div class="page-body" id="pb-3">
+              <div class="loading-q"><div class="dots-anim"><span></span><span></span><span></span></div></div>
+            </div>
+            <div class="swipe-hint">← swipe to go back</div>
+            <button class="fold-btn generate" id="fold-3" onclick="handleFinish()" aria-label="Generate prompt"></button>
+          </div>
+          <div class="page-back"></div>
+        </div>
+
+        <!-- Output page -->
+        <div class="page" id="p-out" data-page="4">
+          <div class="page-face">
+          <div class="out-body">
+            <div id="out-loading" class="loading-q">
+              <div class="dots-anim"><span></span><span></span><span></span></div>
+              <p>Writing your prompt…</p>
+            </div>
+            <div id="out-content" style="display:none; flex-direction:column; flex:1">
+              <div class="out-title">🎉 Your prompt is ready!</div>
+              <div id="qualityToast" class="quality-toast hidden">💡 <span>Your prompt could benefit from a few more details — try describing specific features or who you're building for.</span></div>
+              <div class="prompt-wrap">
+                <div class="prompt-box">
+                  <pre id="generatedPrompt" contenteditable="plaintext-only" spellcheck="false"></pre>
+                  <div class="edit-hint">✎ editable</div>
+                </div>
+                <button class="copy-icon-btn" id="copyBtn" onclick="copyPrompt()" aria-label="Copy prompt">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  <svg class="copy-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="tips-box">
+                <div class="tips-title">Where to paste it 👇</div>
+                <div class="tip"><span class="tip-badge">Lovable</span> lovable.dev → New project → paste in the chat box</div>
+                <div class="tip"><span class="tip-badge">Replit</span> replit.com → Create Repl → use the AI assistant tab</div>
+                <div class="tip"><span class="tip-badge">Claude</span> claude.ai → New chat → paste and press enter</div>
+              </div>
+              <button class="btn-restart" onclick="restart()">← Start over with a new idea</button>
+            </div>
+          </div>
+          </div><!-- /page-face -->
+          <div class="page-back"></div>
+        </div>
+
+      </div><!-- /pages-wrap -->
+    </div><!-- /notepad -->
+  </div><!-- /app -->
+
+  <script>
+    /* ─────────────────────────────────────────────
+       SPLASH
+    ───────────────────────────────────────────── */
+    window.addEventListener('load', () => {
+      const splash = document.getElementById('splash');
+      const app    = document.getElementById('app');
+      function dismissSplash() {
+        splash.classList.add('fade-out');
+        app.style.display = 'flex';
+        requestAnimationFrame(updateBindingHoles);
+        setTimeout(() => { splash.remove(); startPHCycle(); }, 650);
+      }
+      setTimeout(dismissSplash, 2500);
+      splash.addEventListener('click', dismissSplash);
+    });
+
+    /* ─────────────────────────────────────────────
+       ANIMATED PLACEHOLDER LIST
+    ───────────────────────────────────────────── */
+    const PH_POOL = [
+      "a calendar to see my whole month...",
+      "a timer that tracks each task...",
+      "some kind of log to record daily entries...",
+      "a camera scan to save receipts...",
+      "a way to share updates with my team...",
+      "notifications when something changes...",
+      "a dashboard showing all my stats...",
+      "search through everything i've added...",
+      "a morning reminder that...",
+      "a feed of recent activity...",
+      "a form clients can fill in...",
+      "progress bars showing how far i've come...",
+      "a map of nearby locations...",
+      "an inbox for incoming requests...",
+      "a weekly checklist that resets...",
+      "a way to message people directly...",
+      "photos attached to each entry...",
+      "filters to find things faster...",
+    ];
+    const PH_SHOW = 4;
+    const PH_CHARS = 'abcdefghijklmnopqrstuvwxyz.,?! ';
+    const phSleep = ms => new Promise(r => setTimeout(r, ms));
+
+    let phPoolIdx = PH_SHOW;
+    let phStopped = false;
+    let phLooping = false;
+
+    async function animatePHLine(el, newText) {
+      const rand = () => PH_CHARS[Math.floor(Math.random() * PH_CHARS.length)];
+      const n = newText.length;
+      // Matrix scramble: 3 frames of noise at target length, then clear
+      for (let f = 0; f < 3; f++) {
+        if (phStopped) { el.textContent = ''; return; }
+        el.textContent = Array.from({length: n}, rand).join('');
+        await phSleep(65);
+      }
+      el.textContent = '';
+      if (phStopped) return;
+      await phSleep(40);
+      // Typewriter: type one character at a time, clean
+      for (let i = 0; i < n; i++) {
+        if (phStopped) { el.textContent = ''; return; }
+        el.textContent = newText.slice(0, i + 1);
+        await phSleep(32);
+      }
+    }
+
+    async function runPHLoop() {
+      if (phLooping) return;
+      phLooping = true;
+      const ph = document.getElementById('fakePH');
+      if (!ph) { phLooping = false; return; }
+      while (!phStopped) {
+        await phSleep(5000); // pause before each sweep
+        if (phStopped) break;
+        const lineEls = ph.querySelectorAll('.ph-line');
+        if (!lineEls.length) break;
+        // Sweep top-to-bottom, changing each line in order
+        for (let i = 0; i < lineEls.length; i++) {
+          if (phStopped) break;
+          await animatePHLine(lineEls[i], PH_POOL[phPoolIdx % PH_POOL.length]);
+          phPoolIdx++;
+          if (phStopped) break;
+          if (i < lineEls.length - 1) await phSleep(2000); // 2s between lines
+        }
+      }
+      phLooping = false;
+    }
+
+    function startPHCycle() {
+      const ph = document.getElementById('fakePH');
+      const ta = document.getElementById('a-0');
+      if (!ph || !ta) return;
+      // Build initial lines
+      ph.innerHTML = '';
+      for (let i = 0; i < PH_SHOW; i++) {
+        const div = document.createElement('div');
+        div.className = 'ph-line';
+        div.textContent = PH_POOL[i];
+        ph.appendChild(div);
+      }
+      phStopped = false;
+      phLooping = false;
+      phPoolIdx = PH_SHOW;
+      runPHLoop();
+      ta.addEventListener('input', () => {
+        if (ta.value.trim()) {
+          phStopped = true;
+          ph.style.visibility = 'hidden';
+        } else {
+          phStopped = false;
+          phLooping = false;
+          phPoolIdx = PH_SHOW;
+          ph.style.visibility = '';
+          const lineEls = ph.querySelectorAll('.ph-line');
+          lineEls.forEach((el, i) => { el.textContent = PH_POOL[i]; });
+          runPHLoop();
+        }
+      }, { passive: true });
+    }
+
+    /* ─────────────────────────────────────────────
+       API KEY
+    ───────────────────────────────────────────── */
+    const KEY_STORE = 'nbv_claude_key';
+
+    function getKey()   { return localStorage.getItem(KEY_STORE) || ''; }
+    function saveKey()  {
+      const v = document.getElementById('keyInput').value.trim();
+      if (!v) return;
+      localStorage.setItem(KEY_STORE, v);
+      document.getElementById('keyBar').classList.add('hidden');
+      document.getElementById('keySetRow').classList.remove('hidden');
+    }
+    function clearKey() {
+      localStorage.removeItem(KEY_STORE);
+      document.getElementById('keyInput').value = '';
+      document.getElementById('keyBar').classList.remove('hidden');
+      document.getElementById('keySetRow').classList.add('hidden');
+    }
+
+    // Show key UI based on stored state
+    if (getKey()) {
+      document.getElementById('keyBar').classList.add('hidden');
+      document.getElementById('keySetRow').classList.remove('hidden');
+    }
+
+    /* ─────────────────────────────────────────────
+       STATE
+    ───────────────────────────────────────────── */
+    const pages  = Array.from(document.querySelectorAll('[data-page]'));
+    const N_DYN  = 3; // dynamic question page count (pages 1-3)
+    let idx      = 0;
+    let busy     = false;
+    const answers = {}; // pageIdx → answer string
+    const multiSets = {}; // pageIdx → Set for multi-chip answers
+    const dynLoaded = {}; // pageIdx → true when question rendered
+
+    /* ─────────────────────────────────────────────
+       BINDING HOLES
+    ───────────────────────────────────────────── */
+    function updateBindingHoles() {
+      const binding = document.getElementById('binding');
+      const available = binding.offsetWidth - 28; // subtract left+right padding (14px each)
+      const holeSize = 13, gap = 16;
+      const count = Math.floor((available + gap) / (holeSize + gap));
+      binding.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const h = document.createElement('div');
+        h.className = 'hole';
+        binding.appendChild(h);
+      }
+    }
+    window.addEventListener('resize', updateBindingHoles);
+
+    /* ─────────────────────────────────────────────
+       PAGE FLIP
+    ───────────────────────────────────────────── */
+    function initPages() {
+      pages.forEach((p, i) => {
+        p.classList.remove('flip-out', 'flip-in');
+        p.style.zIndex = '';
+        p.dataset.state = i === 0 ? 'current' : 'under';
+      });
+      idx = 0;
+    }
+    initPages();
+
+    function flipForward() {
+      if (busy || idx >= pages.length - 1) return;
+      busy = true;
+      const out  = pages[idx];
+      const next = pages[idx + 1];
+      next.dataset.state = 'under';
+      out.classList.add('flip-out');
+      setTimeout(() => {
+        out.classList.remove('flip-out');
+        out.dataset.state = 'flipped';
+        next.dataset.state = 'current';
+        idx++;
+        busy = false;
+      }, 560);
+    }
+
+    function flipToPage(targetIdx) {
+      // Jump directly to a target page (instant set, then flip to it)
+      if (busy) return;
+      // Set everything in between as flipped
+      pages.forEach((p, i) => {
+        p.classList.remove('flip-out', 'flip-in');
+        if (i < targetIdx)      p.dataset.state = 'flipped';
+        else if (i === targetIdx) p.dataset.state = 'under';
+        else                    p.dataset.state = 'under';
+        p.style.zIndex = '';
+      });
+      // Flip from current to target
+      busy = true;
+      const out  = pages[idx];
+      const next = pages[targetIdx];
+      next.dataset.state = 'under';
+      out.classList.add('flip-out');
+      setTimeout(() => {
+        out.classList.remove('flip-out');
+        out.dataset.state = 'flipped';
+        next.dataset.state = 'current';
+        idx = targetIdx;
+        busy = false;
+      }, 560);
+    }
+
+    function flipBack() {
+      if (busy || idx <= 0) return;
+      busy = true;
+      const prev = pages[idx - 1];
+      const curr = pages[idx];
+      // Reveal previous page underneath immediately
+      prev.classList.remove('flip-out', 'dissolve-out');
+      prev.dataset.state = 'current';
+      prev.style.zIndex = '1';
+      // Dissolve current page on top
+      curr.classList.remove('flip-out');
+      void curr.offsetHeight;
+      curr.classList.add('dissolve-out');
+      setTimeout(() => {
+        curr.classList.remove('dissolve-out');
+        curr.dataset.state = 'flipped';
+        curr.style.zIndex = '';
+        prev.style.zIndex = '';
+        idx--;
+        busy = false;
+      }, 420);
+    }
+
+    /* ─────────────────────────────────────────────
+       SWIPE
+    ───────────────────────────────────────────── */
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let mouseStartX = 0;
+    let mouseStartY = 0;
+    let mouseDragging = false;
+    const wrap = document.getElementById('pagesWrap');
+
+    // Touch (mobile)
+    wrap.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    wrap.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      if (dx < 0) {
+        const foldBtn = pages[idx].querySelector('.fold-btn');
+        if (foldBtn && !foldBtn.disabled) foldBtn.click();
+      } else {
+        flipBack();
+      }
+    }, { passive: true });
+
+    // Mouse drag (desktop)
+    wrap.addEventListener('mousedown', e => {
+      mouseStartX = e.clientX;
+      mouseStartY = e.clientY;
+      mouseDragging = true;
+    });
+
+    window.addEventListener('mouseup', e => {
+      if (!mouseDragging) return;
+      mouseDragging = false;
+      const dx = e.clientX - mouseStartX;
+      const dy = e.clientY - mouseStartY;
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      if (dx < 0) {
+        // drag left = next page (matches swipe behaviour)
+        const foldBtn = pages[idx].querySelector('.fold-btn');
+        if (foldBtn && !foldBtn.disabled) foldBtn.click();
+      } else {
+        // drag right = go back
+        flipBack();
+      }
+    });
+
+    /* ─────────────────────────────────────────────
+       CLAUDE API
+    ───────────────────────────────────────────── */
+    const SYSTEM_QUESTION = `You help non-technical people clarify their app idea by asking short, focused questions.
+
+Rules:
+- Ask one question at a time, adapted to what they've told you
+- Use plain friendly English — zero tech jargon
+- For audience questions: great tools are made for someone specific. "Solving for everyone is solving for no one." Help them get specific. If the app description implies it's for the person themselves (e.g. "my training", "I want to track"), acknowledge that and ask if they are the primary user or if others will use it too. Reword the question naturally around what they said.
+- Suggest 4–6 relevant chip options based on context (short labels, under 4 words each). If audience is clearly themselves, include "Just me" or "Myself" as first chip.
+- Keep "placeholder" text under 40 characters — it shows on a single-line input and gets cut off if too long.
+- Cover different angles across questions: audience, core actions/features, look & feel, constraints
+- Never ask something they've already clearly answered
+- After 3 questions you MUST set done:true
+- "story": Write 1–2 short sentences (max 22 words) summarising everything known so far, in second person. Minimally rephrase answers so the story reads naturally. No em dashes. Wrap 3–5 key phrases in **double asterisks**. Example: "You're building **a hyrox training app**, aimed at **yourself** and fellow athletes."
+- "preselect": Array of chip values from your chips list that clearly match what the user already said. Can be empty [].
+- "chipSentences": Object mapping each chip label to a natural first-person sentence the user would say if they chose it. Keep sentences under 12 words. E.g. {"Just me": "I'm building this for myself", "Athletes": "I'm building this for athletes"}.
+- "chipPrefix": For multi-select, a short phrase used to build the sentence when multiple chips are selected. E.g. "I'm building this for " — the selected labels will be appended, joined naturally.
+
+Respond ONLY with valid JSON (no markdown, no explanation):
+{
+  "question": "...",
+  "hint": "...",
+  "placeholder": "...",
+  "chips": ["...", "..."],
+  "chipMulti": true,
+  "preselect": [],
+  "chipSentences": {},
+  "chipPrefix": "",
+  "story": "You're building **...**",
+  "done": false
+}`;
+
+    const SYSTEM_PROMPT = `You write high-converting prompts for AI vibe coding tools like Lovable, Replit Agent, and Claude Code. These tools build apps directly from a prompt — so your output must be specific, buildable, and complete.
+
+Given a user's rough answers, rearticulate everything into a precise product brief. Improve clarity and specificity without changing the intent. Add sensible implied details the user probably hasn't thought of (empty states, onboarding, error handling, mobile layout).
+
+Write the prompt in this order — as a single flowing block of prose, no headers, no bullet points:
+1. One punchy opening line: what the app is and who it's for.
+2. The core user journey: what happens when someone opens the app and uses it.
+3. The key features, stated as specific buildable actions (e.g. "a button that logs a workout with sets, reps and weight" not "workout tracking").
+4. Visual design intent: tone, feel, colour palette direction, typography style, UI patterns.
+5. Build requirements: mobile-first, fully functional end-to-end, realistic placeholder content, no lorem ipsum, every screen polished and intentional.
+
+Rules:
+- First person ("Build me..." or "I want to build...")
+- Concrete and specific — no vague phrases like "user-friendly" or "modern design"
+- 180–260 words total
+- No markdown, no headers, no lists — pure prose
+- Respond ONLY with the prompt text`;
+
+    async function callClaude(systemPrompt, userMessage) {
+      const key = getKey();
+      if (!key) throw new Error('no key');
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 900,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }]
+        })
+      });
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const data = await res.json();
+      return data.content[0].text;
+    }
+
+    async function fetchNextQuestion(dynIdx) {
+      // dynIdx: 1, 2, or 3 — which dynamic page we're loading
+      const answersText = Object.entries(answers)
+        .map(([k, v]) => `Q${+k+1}: ${v}`)
+        .join('\n');
+      const msg = `Answers so far:\n${answersText}\n\nThis is question ${dynIdx} of 3 follow-up questions. Generate the next one.`;
+      const text = await callClaude(SYSTEM_QUESTION, msg);
+      // Strip markdown code fences if present
+      const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      return JSON.parse(clean);
+    }
+
+    async function fetchFinalPrompt() {
+      const answersText = Object.entries(answers)
+        .map(([k, v]) => `Q${+k+1}: ${v}`)
+        .join('\n\n');
+      return await callClaude(SYSTEM_PROMPT, `Here are the user's answers:\n\n${answersText}`);
+    }
+
+    /* ─────────────────────────────────────────────
+       STATIC FALLBACK QUESTIONS
+    ───────────────────────────────────────────── */
+    const FALLBACK = [
+      {
+        question: 'Who\'s your one person?',
+        hint: 'Solving for everyone is solving for no one.',
+        placeholder: "I'm building this for...",
+        chips: ['Just me', 'Parents', 'Small businesses', 'Young adults', 'Teams', 'Fitness enthusiasts'],
+        chipMulti: true,
+        chipSentences: {
+          'Just me':            "I'm building this for myself",
+          'Parents':            "I'm building this for parents",
+          'Small businesses':   "I'm building this for small businesses",
+          'Young adults':       "I'm building this for young adults",
+          'Teams':              "I'm building this for teams",
+          'Fitness enthusiasts':"I'm building this for fitness enthusiasts"
+        },
+        chipPrefix: "I'm building this for ",
+        preselect: [],
+        done: false
+      },
+      {
+        question: 'What should they be able to do?',
+        hint: 'List the main actions. What should you be able to achieve?',
+        placeholder: '• log vet visits\n• set medication reminders\n• see upcoming appointments',
+        chips: [],
+        chipMulti: false,
+        chipSentences: {},
+        chipPrefix: '',
+        preselect: [],
+        done: false
+      },
+      {
+        question: 'How should it feel?',
+        hint: 'Pick the words that describe the vibe.',
+        placeholder: 'Clean and modern, warm and friendly…',
+        chips: ['Clean & modern', 'Cozy & warm', 'Fun & playful', 'Professional', 'Minimal', 'Bold & colourful'],
+        chipMulti: true,
+        chipSentences: {
+          'Clean & modern':    "I want it to feel clean and modern",
+          'Cozy & warm':       "I want it to feel cozy and warm",
+          'Fun & playful':     "I want it to feel fun and playful",
+          'Professional':      "I want it to feel professional",
+          'Minimal':           "I want it to feel minimal",
+          'Bold & colourful':  "I want it to feel bold and colourful"
+        },
+        chipPrefix: "I want it to feel ",
+        preselect: [],
+        done: true
+      }
+    ];
+
+    function fallbackPrompt(ans) {
+      const idea    = ans[0] || '';
+      const audience= ans[1] || '';
+      const features= ans[2] || '';
+      const feel    = ans[3] || '';
+
+      let p = `Build me a mobile-first web app`;
+      if (idea)     p += ` — ${idea}`;
+      p += `.\n\n`;
+
+      if (audience) p += `This is built specifically for ${audience}. Every design decision — language, layout, interactions — should feel instinctively right for this person. Design for them first, everyone else second.\n\n`;
+
+      if (features) {
+        const items = features.split(/[,\n;]+/).map(s => s.trim()).filter(s => s.length > 2);
+        if (items.length > 1) {
+          p += `The core functionality should include: ${items.join('; ')}. Each of these should be a complete, working interaction — not a placeholder or stub.\n\n`;
+        } else {
+          p += `The core functionality is: ${features}. Build this as a complete, working interaction.\n\n`;
+        }
+      }
+
+      if (feel)     p += `Visually the app should feel ${feel}. Avoid generic templates — this should look and feel intentional and considered. Use consistent spacing, a clear typographic hierarchy, and a colour palette that matches the tone.\n\n`;
+
+      p += `Build the full app end-to-end: working screens, realistic placeholder content (no lorem ipsum), smooth transitions, and proper empty states. Mobile-first layout. Every screen should feel finished and production-ready on first load.`;
+      return p;
+    }
+
+    /* ─────────────────────────────────────────────
+       FALLBACK STORY BUILDER
+    ───────────────────────────────────────────── */
+    function buildFallbackStory(dynIdx) {
+      // Clean an answer for insertion: strip leading "I want to build/I'm building", lowercase start, trim punctuation
+      function clean(s, maxWords) {
+        s = s.trim().replace(/[.!]+$/, '');
+        s = s.replace(/^(i('m| am) (building|making|creating)|i want to build|an app (that|to|for)|a app)/i, '').trim();
+        s = s.charAt(0).toLowerCase() + s.slice(1);
+        return s.split(' ').slice(0, maxWords).join(' ');
+      }
+      const a0 = answers[0] || '';
+      const a1 = answers[1] || '';
+      const a2 = answers[2] || '';
+      let parts = [];
+      if (a0) parts.push(`You're building **${clean(a0, 7)}**`);
+      if (dynIdx >= 2 && a1) parts.push(`for **${clean(a1, 6)}**`);
+      if (dynIdx >= 3 && a2) parts.push(`so users can **${clean(a2, 6)}**`);
+      return parts.length ? parts.join(', ') + '.' : '';
+    }
+
+    /* ─────────────────────────────────────────────
+       RENDER DYNAMIC QUESTION
+    ───────────────────────────────────────────── */
+    const chipData = {}; // dynIdx → { sentences, prefix }
+
+    function buildSentenceFromSelection(dynIdx) {
+      const cd = chipData[dynIdx] || {};
+      const selected = Array.from(multiSets[dynIdx] || []);
+      if (!selected.length) return '';
+      if (selected.length === 1) {
+        return cd.sentences[selected[0]] || (cd.prefix ? cd.prefix + selected[0] : selected[0]);
+      }
+      // Multiple: prefix + natural list
+      const last = selected[selected.length - 1];
+      const rest = selected.slice(0, -1);
+      const joined = rest.join(', ') + ' and ' + last;
+      return cd.prefix ? cd.prefix + joined : joined;
+    }
+
+    function renderQuestion(dynIdx, data) {
+      const pb = document.getElementById(`pb-${dynIdx}`);
+      multiSets[dynIdx] = new Set();
+      chipData[dynIdx] = { sentences: data.chipSentences || {}, prefix: data.chipPrefix || '' };
+
+      // Render story bar
+      const storyEl = document.getElementById(`story-${dynIdx}`);
+      const storyText = data.story || buildFallbackStory(dynIdx);
+      if (storyEl && storyText) {
+        storyEl.innerHTML = storyText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        document.getElementById(`p-${dynIdx}`).classList.add('has-story');
+      }
+
+      // Build question HTML
+      let html = `<div class="question">${data.question}</div>`;
+      if (data.hint) html += `<div class="hint">${data.hint}</div>`;
+
+      if (data.chips && data.chips.length) {
+        // Input above chips
+        html += `<input type="text" id="a-${dynIdx}" placeholder="${(data.placeholder||'').replace(/"/g,'&quot;')}" />`;
+        html += `<div class="chips" id="chips-${dynIdx}">`;
+        data.chips.forEach(c => {
+          html += `<div class="chip" data-multi="${data.chipMulti}" data-page="${dynIdx}" data-val="${c.replace(/"/g,'&quot;')}">${c}</div>`;
+        });
+        html += `</div>`;
+      } else {
+        html += `<textarea id="a-${dynIdx}" placeholder="${(data.placeholder||'').replace(/"/g,'&quot;')}"></textarea>`;
+      }
+
+      pb.innerHTML = html;
+      dynLoaded[dynIdx] = true;
+
+      // Attach chip listeners
+      pb.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const pi    = parseInt(chip.dataset.page);
+          const val   = chip.dataset.val;
+          const multi = chip.dataset.multi === 'true';
+          const input = document.getElementById(`a-${pi}`);
+          if (!multiSets[pi]) multiSets[pi] = new Set();
+          if (multi) {
+            chip.classList.toggle('sel');
+            if (chip.classList.contains('sel')) multiSets[pi].add(val);
+            else multiSets[pi].delete(val);
+            input.value = buildSentenceFromSelection(pi);
+          } else {
+            pb.querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
+            chip.classList.add('sel');
+            const cd = chipData[pi] || {};
+            input.value = cd.sentences[val] || val;
+          }
+          // Keep input editable — focus at end
+          input.focus();
+          if (input.setSelectionRange) {
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+          }
+        });
+      });
+
+      // Pre-select chips that match what user already said
+      const preselect = data.preselect || [];
+      if (preselect.length) {
+        pb.querySelectorAll('.chip').forEach(chip => {
+          const match = preselect.some(p => p.toLowerCase().trim() === chip.dataset.val.toLowerCase().trim());
+          if (match) chip.click();
+        });
+      }
+
+      // Focus input
+      setTimeout(() => {
+        const inp = pb.querySelector('textarea, input');
+        if (inp) inp.focus();
+      }, 100);
+    }
+
+    /* ─────────────────────────────────────────────
+       HANDLE NEXT / FINISH
+    ───────────────────────────────────────────── */
+    async function handleNext(pageIdx) {
+      // Save answer from current page
+      const inp = document.getElementById(`a-${pageIdx}`);
+      const val = inp ? inp.value.trim() : '';
+      answers[pageIdx] = val;
+
+      const nextIdx = pageIdx + 1;
+
+      // Flip to next page first (shows loading dots if not yet loaded)
+      flipForward();
+
+      // Disable fold button while loading
+      const foldBtn = document.getElementById(`fold-${nextIdx}`);
+      if (foldBtn) foldBtn.disabled = true;
+
+      // Load the next question
+      try {
+        let data;
+        if (getKey()) {
+          data = await fetchNextQuestion(nextIdx);
+        } else {
+          data = FALLBACK[nextIdx - 1];
+        }
+        renderQuestion(nextIdx, data);
+      } catch (e) {
+        console.warn('AI question failed, using fallback:', e);
+        renderQuestion(nextIdx, FALLBACK[nextIdx - 1] || FALLBACK[FALLBACK.length - 1]);
+      }
+
+      if (foldBtn) foldBtn.disabled = false;
+    }
+
+    async function handleFinish() {
+      // Save final answer
+      const inp = document.getElementById('a-3');
+      const val = inp ? inp.value.trim() : '';
+      answers[3] = val;
+
+      // Flip to output page
+      flipToPage(4);
+
+      // Generate the prompt
+      try {
+        let prompt;
+        if (getKey()) {
+          prompt = await fetchFinalPrompt();
+        } else {
+          prompt = fallbackPrompt(answers);
+        }
+        showPrompt(prompt);
+      } catch (e) {
+        console.warn('AI prompt failed, using fallback:', e);
+        showPrompt(fallbackPrompt(answers));
+      }
+    }
+
+    /* ─────────────────────────────────────────────
+       COPY / RESTART
+    ───────────────────────────────────────────── */
+    function showPrompt(prompt) {
+      document.getElementById('generatedPrompt').textContent = prompt;
+      document.getElementById('out-loading').style.display = 'none';
+      document.getElementById('out-content').style.display = 'flex';
+      // Show quality toast if prompt is sparse (< 90 words)
+      const wordCount = prompt.trim().split(/\s+/).length;
+      document.getElementById('qualityToast').classList.toggle('hidden', wordCount >= 90);
+    }
+
+    function copyPrompt() {
+      navigator.clipboard.writeText(
+        document.getElementById('generatedPrompt').textContent
+      ).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.classList.add('copied');
+        setTimeout(() => btn.classList.remove('copied'), 2000);
+      });
+    }
+
+    function restart() {
+      // Reset answers + state
+      Object.keys(answers).forEach(k => delete answers[k]);
+      Object.keys(dynLoaded).forEach(k => delete dynLoaded[k]);
+      Object.keys(multiSets).forEach(k => delete multiSets[k]);
+
+      // Clear Q1
+      const q1 = document.getElementById('a-0');
+      if (q1) q1.value = '';
+
+      // Reset dynamic pages to loading state
+      for (let i = 1; i <= N_DYN; i++) {
+        const pb = document.getElementById(`pb-${i}`);
+        pb.innerHTML = `<div class="loading-q"><div class="dots-anim"><span></span><span></span><span></span></div></div>`;
+        const fb = document.getElementById(`fold-${i}`);
+        if (fb) fb.disabled = false;
+      }
+
+      // Reset output page
+      document.getElementById('qualityToast').classList.add('hidden');
+      document.getElementById('generatedPrompt').textContent = '';
+      document.getElementById('out-loading').style.display = 'flex';
+      document.getElementById('out-content').style.display = 'none';
+      document.getElementById('generatedPrompt').textContent = '';
+
+      initPages();
+    }
+  </script>
+</body>
+</html>
