@@ -103,63 +103,6 @@
     }
 
     /* ── API key bar ── */
-    .key-bar {
-      width: 100%;
-      max-width: 420px;
-      background: #FFF8E0;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      font-size: 12px;
-      color: var(--ink-dim);
-    }
-    .key-bar.hidden { display: none; }
-    .key-bar input {
-      flex: 1;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      padding: 5px 8px;
-      font-size: 12px;
-      font-family: 'Instrument Sans', sans-serif;
-      background: white;
-      color: var(--ink);
-      outline: none;
-      min-width: 0;
-    }
-    .key-bar input:focus { border-color: var(--accent2); }
-    .key-bar button {
-      padding: 5px 12px;
-      border-radius: 4px;
-      background: var(--accent2);
-      color: white;
-      border: none;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      font-family: 'Instrument Sans', sans-serif;
-    }
-    .key-set-row {
-      width: 100%;
-      max-width: 420px;
-      text-align: right;
-      margin-bottom: 8px;
-    }
-    .key-set-row button {
-      background: none;
-      border: none;
-      font-size: 11px;
-      color: var(--binding);
-      cursor: pointer;
-      font-family: 'Instrument Sans', sans-serif;
-      padding: 2px 0;
-    }
-    .key-set-row button:hover { color: var(--ink-dim); }
-
     /* ── Logo (below notepad, centered in remaining space) ── */
     .logo-wrap {
       flex: 1;
@@ -676,16 +619,6 @@ that actually builds.</div>
   <!-- ── Main app ── -->
   <div id="app" style="display:none" class="app-layout">
 
-    <!-- API key bar -->
-    <div class="key-bar" id="keyBar">
-      <span style="white-space:nowrap">Claude API key</span>
-      <input type="password" id="keyInput" placeholder="sk-ant-api03-..." />
-      <button onclick="saveKey()">Save</button>
-    </div>
-    <div class="key-set-row hidden" id="keySetRow">
-      <button onclick="clearKey()">✕ clear API key</button>
-    </div>
-
     <div class="notepad">
       <div class="binding" id="binding"></div>
 
@@ -910,32 +843,6 @@ that actually builds.</div>
           runPHLoop();
         }
       }, { passive: true });
-    }
-
-    /* ─────────────────────────────────────────────
-       API KEY
-    ───────────────────────────────────────────── */
-    const KEY_STORE = 'nbv_claude_key';
-
-    function getKey()   { return localStorage.getItem(KEY_STORE) || ''; }
-    function saveKey()  {
-      const v = document.getElementById('keyInput').value.trim();
-      if (!v) return;
-      localStorage.setItem(KEY_STORE, v);
-      document.getElementById('keyBar').classList.add('hidden');
-      document.getElementById('keySetRow').classList.remove('hidden');
-    }
-    function clearKey() {
-      localStorage.removeItem(KEY_STORE);
-      document.getElementById('keyInput').value = '';
-      document.getElementById('keyBar').classList.remove('hidden');
-      document.getElementById('keySetRow').classList.add('hidden');
-    }
-
-    // Show key UI based on stored state
-    if (getKey()) {
-      document.getElementById('keyBar').classList.add('hidden');
-      document.getElementById('keySetRow').classList.remove('hidden');
     }
 
     /* ─────────────────────────────────────────────
@@ -1174,16 +1081,9 @@ Rules:
 - Respond ONLY with the prompt text`;
 
     async function callClaude(systemPrompt, userMessage) {
-      const key = getKey();
-      if (!key) throw new Error('no key');
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 900,
@@ -1501,12 +1401,7 @@ Rules:
 
       // Load the next question
       try {
-        let data;
-        if (getKey()) {
-          data = await fetchNextQuestion(nextIdx);
-        } else {
-          data = FALLBACK[nextIdx - 1];
-        }
+        const data = await fetchNextQuestion(nextIdx);
         renderQuestion(nextIdx, data);
       } catch (e) {
         console.warn('AI question failed, using fallback:', e);
@@ -1527,12 +1422,7 @@ Rules:
 
       // Generate the prompt
       try {
-        let prompt;
-        if (getKey()) {
-          prompt = await fetchFinalPrompt();
-        } else {
-          prompt = fallbackPrompt(answers);
-        }
+        const prompt = await fetchFinalPrompt();
         showPrompt(prompt);
       } catch (e) {
         console.warn('AI prompt failed, using fallback:', e);
