@@ -1043,7 +1043,23 @@ Rules:
 - Cover different angles across questions: audience, core actions/features, look & feel, constraints
 - Never ask something they've already clearly answered
 - After 3 questions you MUST set done:true
-- "story": Write 1–2 short sentences (max 22 words) that read like a natural, polished sentence — not a fill-in-the-blank template. Rephrase and blend the user's answers so the story flows as if a human wrote it from scratch. Tweak wording for grammar and flow but never change the meaning. Don't just slot answers into "You're building X, for Y" — actually write a sentence. No em dashes. Wrap 3–5 key phrases in **double asterisks**. Example: "A **hyrox training app** that helps **you and fellow athletes** track workouts and stay accountable."
+- "story": This is the most important field. It's a tiny summary at the top of the notepad that tells the user "I understand what you want." It must read like a human pitch — short, confident, clear.
+  RULES for story:
+  • Max 15 words. Shorter is better. Every word must earn its place.
+  • Blend all answers into ONE sentence. Don't list them — synthesise.
+  • RESTRUCTURE for natural flow. Put the subject (who it's for) early, then the action. Don't just append answers in the order they were given.
+    Input order: "help me train for hyrox" + "me and first time racers" →
+    BAD: "A way to **help me train** for hyrox for **me and first time racers**" ← repeats "me", appends audience at the end
+    GOOD: "A way for **you and first-time racers** to **train for the next hyrox**" ← restructured, audience up front, flows naturally
+  • Mirror the user's own language. If they said "track my runs", say "track runs" not "monitor athletic performance". Keep their words, just rearrange for flow.
+  • Wrap 2–3 key phrases in **double asterisks**. No em dashes, no semicolons.
+  • The sentence should get richer with each page — not longer. Fold new info INTO the existing phrase rather than appending clauses.
+  • Remove redundancy. If the idea implies the audience, don't repeat it. If "for me" is obvious, drop it.
+  GOOD (after 1 answer): "A **hyrox training tracker** to measure your progress."
+  GOOD (after 2 answers): "A **hyrox tracker** for **you and your training crew**."
+  GOOD (after 3 answers): "A **clean, motivating hyrox tracker** for **you and your crew**."
+  BAD: "A hyrox training tracker for you and your training partners that feels clean and motivating." ← too long, just appending
+  BAD: "An app that tracks hyrox training for partners with clean feel." ← robotic template
 - "preselect": Array of chip values from your chips list that clearly match what the user already said. Can be empty [].
 - "chipSentences": Object mapping each chip label to a natural first-person sentence the user would say if they chose it. Keep sentences under 12 words. E.g. {"Just me": "I'm building this for myself", "Athletes": "I'm building this for athletes"}.
 - "chipPrefix": For multi-select, a short phrase used to build the sentence when multiple chips are selected. E.g. "I'm building this for " — the selected labels will be appended, joined naturally.
@@ -1058,7 +1074,7 @@ Respond ONLY with valid JSON (no markdown, no explanation):
   "preselect": [],
   "chipSentences": {},
   "chipPrefix": "",
-  "story": "You're building **...**",
+  "story": "A **short punchy summary** for **the audience**.",
   "done": false
 }`;
 
@@ -1196,59 +1212,56 @@ Rules:
     }
 
     /* ─────────────────────────────────────────────
-       FALLBACK STORY BUILDER
+       STORY BUILDER (instant fallback + AI refinement)
     ───────────────────────────────────────────── */
-    function buildFallbackStory(dynIdx) {
-      /* Clean an answer: strip common preambles, normalise case, trim */
-      function clean(s, maxWords) {
-        s = s.trim().replace(/[.!]+$/, '');
-        s = s.replace(/^(i('m| am) (building|making|creating)|i want to (build|make|create)|an app (that |to |for )|a app )/i, '').trim();
-        if (s.length === 0) return '';
-        s = s.charAt(0).toLowerCase() + s.slice(1);
-        return s.split(' ').slice(0, maxWords).join(' ');
+    let _lastGoodStory = ''; // cache the last AI-refined story
+
+    function gatherLiveAnswers() {
+      /* Read live values from inputs (if present) or fall back to saved answers */
+      const live = {};
+      for (let i = 0; i <= 3; i++) {
+        const inp = document.getElementById(`a-${i}`);
+        const val = (inp ? inp.value.trim() : '') || (answers[i] || '');
+        if (val) live[i] = val;
+      }
+      return live;
+    }
+
+    function buildFallbackStory() {
+      const a = gatherLiveAnswers();
+      if (!a[0]) return '';
+
+      function strip(s) {
+        return s.replace(/^(i('m| am) (building|making|creating)|i want to (build|make|create)|an app (that |to |for )|a app )/i, '')
+                .trim().replace(/[.!]+$/, '');
+      }
+      function lc(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+
+      const idea = strip(a[0]);
+      if (!idea) return '';
+
+      /* Keep it tight — fold answers into the idea phrase, don't append */
+      const words = lc(idea).split(' ').slice(0, 6).join(' ');
+      let s = `A **${words}**`;
+
+      if (a[1]) {
+        const who = strip(a[1]);
+        if (/^(just me|myself|me)$/i.test(who)) s += ` for **you**`;
+        else if (who) s += ` for **${lc(who).split(' ').slice(0, 4).join(' ')}**`;
       }
 
-      /* Detect if the answer already sounds like a noun phrase ("a workout tracker") vs a clause ("track my workouts") */
-      function isNounPhrase(s) {
-        return /^(a |an |the |my )/i.test(s) || /^[a-z]+(ing|er|or) /i.test(s.split(' ')[0] || '');
-      }
+      return s + '.';
+    }
 
-      const a0 = clean(answers[0] || '', 10);
-      const a1 = clean(answers[1] || '', 8);
-      const a2 = clean(answers[2] || '', 8);
-      if (!a0) return '';
-
-      /* Build a flowing sentence, adapting connectors to what was said */
-      let story = '';
-
-      if (isNounPhrase(a0)) {
-        story = `A **${a0}**`;
-      } else {
-        story = `An app that **${a0}**`;
-      }
-
-      if (dynIdx >= 2 && a1) {
-        /* Audience — adapt phrasing based on content */
-        const forMyself = /^(just me|myself|me$|i'm |for me)/i.test(a1);
-        if (forMyself) {
-          story += `, built **just for you**`;
-        } else if (/^(for |aimed at )/i.test(a1)) {
-          story += ` **${a1}**`;
-        } else {
-          story += ` for **${a1}**`;
-        }
-      }
-
-      if (dynIdx >= 3 && a2) {
-        /* Feel/features — blend naturally */
-        if (/^(so |to |that )/i.test(a2)) {
-          story += `, **${a2}**`;
-        } else {
-          story += ` — with a **${a2}** feel`;
-        }
-      }
-
-      return story + '.';
+    /* ── Story rendering (only on page transitions) ── */
+    function renderStory(dynIdx, aiStory) {
+      const storyEl = document.getElementById(`story-${dynIdx}`);
+      if (!storyEl) return;
+      const text = aiStory || _lastGoodStory || buildFallbackStory();
+      if (!text) return;
+      if (aiStory) _lastGoodStory = aiStory;
+      storyEl.innerHTML = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      document.getElementById(`p-${dynIdx}`).classList.add('has-story');
     }
 
     /* ─────────────────────────────────────────────
@@ -1275,13 +1288,8 @@ Rules:
       multiSets[dynIdx] = new Set();
       chipData[dynIdx] = { sentences: data.chipSentences || {}, prefix: data.chipPrefix || '' };
 
-      // Render story bar
-      const storyEl = document.getElementById(`story-${dynIdx}`);
-      const storyText = data.story || buildFallbackStory(dynIdx);
-      if (storyEl && storyText) {
-        storyEl.innerHTML = storyText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        document.getElementById(`p-${dynIdx}`).classList.add('has-story');
-      }
+      // Render story bar — only on page load, not while typing
+      renderStory(dynIdx, data.story);
 
       // Build question HTML
       let html = `<div class="question">${data.question}</div>`;
@@ -1327,6 +1335,8 @@ Rules:
             const len = input.value.length;
             input.setSelectionRange(len, len);
           }
+          // Save answer live
+          answers[pi] = input.value.trim();
         });
       });
 
@@ -1353,11 +1363,15 @@ Rules:
           chipTA.style.height = 'auto';
           chipTA.style.height = Math.min(chipTA.scrollHeight, 72) + 'px';
           checkOverflow(chipTA);
+          answers[dynIdx] = chipTA.value.trim();
         });
       }
-      // Full-page textareas: only scroll when content overflows the page
+      // Full-page textareas: overflow check
       pb.querySelectorAll('textarea:not(.chip-input)').forEach(ta => {
-        ta.addEventListener('input', () => checkOverflow(ta));
+        ta.addEventListener('input', () => {
+          checkOverflow(ta);
+          answers[dynIdx] = ta.value.trim();
+        });
         // Bullet-point continuation
         ta.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
