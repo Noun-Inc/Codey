@@ -40,15 +40,25 @@
       color: var(--ink);
     }
 
+    /* ── App layout — fills viewport, logo centered in leftover space ── */
+    .app-layout {
+      position: fixed;
+      inset: 0;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px;
+      overflow: hidden;
+    }
+
     /* ── Splash screen ── */
     #splash {
       position: fixed;
       inset: 0;
       background-color: #EAF7F9;
       background-image:
-        linear-gradient(rgba(175, 148, 148, 0.28) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(175, 148, 148, 0.28) 1px, transparent 1px);
-      background-size: 100px 100px;
+        linear-gradient(rgba(175, 148, 148, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(175, 148, 148, 0.18) 1px, transparent 1px);
+      background-size: 88px 88px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -60,26 +70,36 @@
     }
     #splash.fade-out { opacity: 0; pointer-events: none; }
     .splash-logo {
-      margin-bottom: 32px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .splash-logo img {
-      width: 150px;
+      width: clamp(260px, 55vw, 380px);
       height: auto;
       display: block;
     }
-    .splash-title {
-      font-family: 'Instrument Sans', sans-serif;
-      font-size: clamp(24px, 6vw, 34px);
-      font-weight: 700;
-      color: var(--ink);
-      line-height: 1.15;
-      margin-bottom: 12px;
-    }
     .splash-sub {
-      font-size: 16px;
-      color: var(--ink-dim);
-      line-height: 1.5;
-      max-width: 320px;
+      font-family: 'Azeret Mono', monospace;
+      font-size: clamp(15px, 4vw, 22px);
+      font-weight: 300;
+      color: #9BAEC2;
+      line-height: 1.6;
+      padding-bottom: 44px;
+      white-space: pre-line;
+    }
+    @media (min-width: 520px) {
+      .splash-sub { white-space: normal; max-width: 480px; }
+    }
+    /* Shorter screens — shrink notebook, keep logo spacing */
+    @media (max-height: 700px) {
+      .pages-wrap { height: calc(100dvh - 160px); }
+      .logo-wrap img { width: 75px; }
+    }
+    @media (max-height: 600px) {
+      .pages-wrap { height: calc(100dvh - 140px); }
+      .logo-wrap img { width: 65px; }
     }
 
     /* ── API key bar ── */
@@ -140,11 +160,17 @@
     }
     .key-set-row button:hover { color: var(--ink-dim); }
 
-    /* ── Logo ── */
-    img.logo {
-      width: 150px;
+    /* ── Logo (below notepad, centered in remaining space) ── */
+    .logo-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .logo-wrap img {
+      width: 75px;
       height: auto;
-      margin-bottom: 16px;
       display: block;
     }
 
@@ -179,7 +205,6 @@
       overflow: hidden;
       justify-content: center;
     }
-    .hidden { display: none !important; }
     .hole {
       width: 13px;
       height: 13px;
@@ -188,11 +213,12 @@
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
       flex-shrink: 0;
     }
+    .hidden { display: none !important; }
 
     /* ── 3-D perspective container ── */
     .pages-wrap {
       position: relative;
-      height: min(520px, calc(100dvh - 175px));
+      height: calc(100dvh - 150px);
       perspective: 900px;
       perspective-origin: 90% 100%;
       /* overflow kept off — clips 3D mid-flip */
@@ -233,6 +259,18 @@
       -webkit-backface-visibility: hidden;
       pointer-events: none;
       box-shadow: inset 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    /* ── Thought-bubble background on page 0 ── */
+    .page-bg-bubble {
+      position: absolute;
+      bottom: 30px;
+      right: 5%;
+      width: 60%;
+      max-width: 280px;
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 0;
     }
 
     /* ── Page states ── */
@@ -324,7 +362,7 @@
       font-weight: 500;
     }
 
-    textarea, input[type="text"] {
+    textarea {
       width: 100%;
       background: transparent;
       border: none;
@@ -337,13 +375,22 @@
       line-height: 1.6;
       transition: border-color 0.2s;
       -webkit-appearance: none;
+      overflow-y: auto;
+      word-wrap: break-word;
+      white-space: pre-wrap;
     }
-    textarea:focus, input:focus { border-bottom-color: var(--accent); }
-    textarea::placeholder, input::placeholder { color: var(--binding); }
-    input[type="text"] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    textarea { flex: 1; min-height: 80px; }
+    textarea:focus { border-bottom-color: var(--accent); }
+    textarea::placeholder { color: var(--binding); }
+    textarea { flex: 1; min-height: 48px; }
     .textarea-wrap { flex: 1; position: relative; display: flex; flex-direction: column; min-height: 0; }
     .textarea-wrap textarea { flex: 1; }
+    /* Chip-page textareas — compact, grows with content up to a limit then scrolls */
+    textarea.chip-input {
+      min-height: 28px;
+      max-height: 72px;
+      flex: none;
+      margin-bottom: 6px;
+    }
     .fake-placeholder {
       position: absolute;
       top: 2px; left: 0; right: 0;
@@ -617,11 +664,13 @@
   <!-- ── Splash ── -->
   <div id="splash">
     <div class="splash-logo"><img src="yourfriendcodey.svg" alt="Your Friend Codey" /></div>
-    <div class="splash-sub">Turn your idea into a prompt that actually builds.</div>
+    <div class="splash-sub">Turn your idea,
+into a prompt
+that actually builds.</div>
   </div>
 
   <!-- ── Main app ── -->
-  <div id="app" style="display:none; flex-direction:column; align-items:center; width:100%">
+  <div id="app" style="display:none" class="app-layout">
 
     <!-- API key bar -->
     <div class="key-bar" id="keyBar">
@@ -633,8 +682,6 @@
       <button onclick="clearKey()">✕ clear API key</button>
     </div>
 
-    <img src="yourfriendcodey.svg" alt="Your Friend Codey" class="logo" />
-
     <div class="notepad">
       <div class="binding" id="binding"></div>
 
@@ -643,6 +690,7 @@
         <!-- Page 0: Q1 — always static -->
         <div class="page" id="p-0" data-page="0">
           <div class="page-face">
+            <img src="thought-bubble.svg" class="page-bg-bubble" alt="" aria-hidden="true" />
             <div class="page-body">
               <div class="question">What's the big idea?</div>
               <div class="hint">Describe it like you're telling a friend over coffee.</div>
@@ -734,6 +782,8 @@
 
       </div><!-- /pages-wrap -->
     </div><!-- /notepad -->
+
+    <div class="logo-wrap"><img src="yourfriendcodey.svg" alt="Your Friend Codey" /></div>
   </div><!-- /app -->
 
   <script>
@@ -900,7 +950,7 @@
     ───────────────────────────────────────────── */
     function updateBindingHoles() {
       const binding = document.getElementById('binding');
-      const available = binding.offsetWidth - 28; // subtract left+right padding (14px each)
+      const available = binding.offsetWidth - 28;
       const holeSize = 13, gap = 16;
       const count = Math.floor((available + gap) / (holeSize + gap));
       binding.innerHTML = '';
@@ -1055,7 +1105,7 @@ Rules:
 - Cover different angles across questions: audience, core actions/features, look & feel, constraints
 - Never ask something they've already clearly answered
 - After 3 questions you MUST set done:true
-- "story": Write 1–2 short sentences (max 22 words) summarising everything known so far, in second person. Minimally rephrase answers so the story reads naturally. No em dashes. Wrap 3–5 key phrases in **double asterisks**. Example: "You're building **a hyrox training app**, aimed at **yourself** and fellow athletes."
+- "story": Write 1–2 short sentences (max 22 words) that read like a natural, polished sentence — not a fill-in-the-blank template. Rephrase and blend the user's answers so the story flows as if a human wrote it from scratch. Tweak wording for grammar and flow but never change the meaning. Don't just slot answers into "You're building X, for Y" — actually write a sentence. No em dashes. Wrap 3–5 key phrases in **double asterisks**. Example: "A **hyrox training app** that helps **you and fellow athletes** track workouts and stay accountable."
 - "preselect": Array of chip values from your chips list that clearly match what the user already said. Can be empty [].
 - "chipSentences": Object mapping each chip label to a natural first-person sentence the user would say if they chose it. Keep sentences under 12 words. E.g. {"Just me": "I'm building this for myself", "Athletes": "I'm building this for athletes"}.
 - "chipPrefix": For multi-select, a short phrase used to build the sentence when multiple chips are selected. E.g. "I'm building this for " — the selected labels will be appended, joined naturally.
@@ -1218,21 +1268,56 @@ Rules:
        FALLBACK STORY BUILDER
     ───────────────────────────────────────────── */
     function buildFallbackStory(dynIdx) {
-      // Clean an answer for insertion: strip leading "I want to build/I'm building", lowercase start, trim punctuation
+      /* Clean an answer: strip common preambles, normalise case, trim */
       function clean(s, maxWords) {
         s = s.trim().replace(/[.!]+$/, '');
-        s = s.replace(/^(i('m| am) (building|making|creating)|i want to build|an app (that|to|for)|a app)/i, '').trim();
+        s = s.replace(/^(i('m| am) (building|making|creating)|i want to (build|make|create)|an app (that |to |for )|a app )/i, '').trim();
+        if (s.length === 0) return '';
         s = s.charAt(0).toLowerCase() + s.slice(1);
         return s.split(' ').slice(0, maxWords).join(' ');
       }
-      const a0 = answers[0] || '';
-      const a1 = answers[1] || '';
-      const a2 = answers[2] || '';
-      let parts = [];
-      if (a0) parts.push(`You're building **${clean(a0, 7)}**`);
-      if (dynIdx >= 2 && a1) parts.push(`for **${clean(a1, 6)}**`);
-      if (dynIdx >= 3 && a2) parts.push(`so users can **${clean(a2, 6)}**`);
-      return parts.length ? parts.join(', ') + '.' : '';
+
+      /* Detect if the answer already sounds like a noun phrase ("a workout tracker") vs a clause ("track my workouts") */
+      function isNounPhrase(s) {
+        return /^(a |an |the |my )/i.test(s) || /^[a-z]+(ing|er|or) /i.test(s.split(' ')[0] || '');
+      }
+
+      const a0 = clean(answers[0] || '', 10);
+      const a1 = clean(answers[1] || '', 8);
+      const a2 = clean(answers[2] || '', 8);
+      if (!a0) return '';
+
+      /* Build a flowing sentence, adapting connectors to what was said */
+      let story = '';
+
+      if (isNounPhrase(a0)) {
+        story = `A **${a0}**`;
+      } else {
+        story = `An app that **${a0}**`;
+      }
+
+      if (dynIdx >= 2 && a1) {
+        /* Audience — adapt phrasing based on content */
+        const forMyself = /^(just me|myself|me$|i'm |for me)/i.test(a1);
+        if (forMyself) {
+          story += `, built **just for you**`;
+        } else if (/^(for |aimed at )/i.test(a1)) {
+          story += ` **${a1}**`;
+        } else {
+          story += ` for **${a1}**`;
+        }
+      }
+
+      if (dynIdx >= 3 && a2) {
+        /* Feel/features — blend naturally */
+        if (/^(so |to |that )/i.test(a2)) {
+          story += `, **${a2}**`;
+        } else {
+          story += ` — with a **${a2}** feel`;
+        }
+      }
+
+      return story + '.';
     }
 
     /* ─────────────────────────────────────────────
@@ -1273,7 +1358,7 @@ Rules:
 
       if (data.chips && data.chips.length) {
         // Input above chips
-        html += `<input type="text" id="a-${dynIdx}" placeholder="${(data.placeholder||'').replace(/"/g,'&quot;')}" />`;
+        html += `<textarea class="chip-input" id="a-${dynIdx}" rows="1" placeholder="${(data.placeholder||'').replace(/"/g,'&quot;')}"></textarea>`;
         html += `<div class="chips" id="chips-${dynIdx}">`;
         data.chips.forEach(c => {
           html += `<div class="chip" data-multi="${data.chipMulti}" data-page="${dynIdx}" data-val="${c.replace(/"/g,'&quot;')}">${c}</div>`;
@@ -1323,9 +1408,23 @@ Rules:
         });
       }
 
+      // Auto-grow chip textareas & scroll to bottom as user types
+      const chipTA = pb.querySelector('textarea.chip-input');
+      if (chipTA) {
+        chipTA.addEventListener('input', () => {
+          chipTA.style.height = 'auto';
+          chipTA.style.height = Math.min(chipTA.scrollHeight, 72) + 'px';
+          chipTA.scrollTop = chipTA.scrollHeight;
+        });
+      }
+      // All textareas: scroll to bottom on input so new text stays visible
+      pb.querySelectorAll('textarea:not(.chip-input)').forEach(ta => {
+        ta.addEventListener('input', () => { ta.scrollTop = ta.scrollHeight; });
+      });
+
       // Focus input
       setTimeout(() => {
-        const inp = pb.querySelector('textarea, input');
+        const inp = pb.querySelector('textarea');
         if (inp) inp.focus();
       }, 100);
     }
