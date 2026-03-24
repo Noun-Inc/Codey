@@ -375,10 +375,12 @@
       line-height: 1.6;
       transition: border-color 0.2s;
       -webkit-appearance: none;
-      overflow-y: auto;
+      overflow-y: hidden;
       word-wrap: break-word;
       white-space: pre-wrap;
     }
+    /* Only scroll when content actually overflows the page */
+    textarea.overflowing { overflow-y: auto; }
     textarea:focus { border-bottom-color: var(--accent); }
     textarea::placeholder { color: var(--binding); }
     textarea { flex: 1; min-height: 48px; }
@@ -390,7 +392,9 @@
       max-height: 72px;
       flex: none;
       margin-bottom: 6px;
+      overflow-y: hidden;
     }
+    textarea.chip-input.overflowing { overflow-y: auto; }
     .fake-placeholder {
       position: absolute;
       top: 2px; left: 0; right: 0;
@@ -975,6 +979,33 @@ that actually builds.</div>
     }
     initPages();
 
+    /* Page-0 textarea: overflow detection + bullet point support */
+    (function () {
+      const ta0 = document.getElementById('a-0');
+      if (!ta0) return;
+      ta0.addEventListener('input', () => {
+        const overflows = ta0.scrollHeight > ta0.clientHeight + 2;
+        ta0.classList.toggle('overflowing', overflows);
+        if (overflows) ta0.scrollTop = ta0.scrollHeight;
+      });
+      /* Auto-continue bullet points: if user presses Enter after a "- " line, start a new bullet */
+      ta0.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const val = ta0.value;
+          const pos = ta0.selectionStart;
+          const before = val.substring(0, pos);
+          const lastLine = before.split('\n').pop();
+          const bullet = lastLine.match(/^(\s*[-•*]\s)/);
+          if (bullet) {
+            e.preventDefault();
+            const insert = '\n' + bullet[1];
+            ta0.setRangeText(insert, pos, pos, 'end');
+            ta0.dispatchEvent(new Event('input'));
+          }
+        }
+      });
+    })();
+
     function flipForward() {
       if (busy || idx >= pages.length - 1) return;
       busy = true;
@@ -1408,18 +1439,39 @@ Rules:
         });
       }
 
-      // Auto-grow chip textareas & scroll to bottom as user types
+      // Check if textarea content overflows and toggle scroll + auto-scroll
+      function checkOverflow(ta) {
+        const overflows = ta.scrollHeight > ta.clientHeight + 2;
+        ta.classList.toggle('overflowing', overflows);
+        if (overflows) ta.scrollTop = ta.scrollHeight;
+      }
+
+      // Auto-grow chip textareas
       const chipTA = pb.querySelector('textarea.chip-input');
       if (chipTA) {
         chipTA.addEventListener('input', () => {
           chipTA.style.height = 'auto';
           chipTA.style.height = Math.min(chipTA.scrollHeight, 72) + 'px';
-          chipTA.scrollTop = chipTA.scrollHeight;
+          checkOverflow(chipTA);
         });
       }
-      // All textareas: scroll to bottom on input so new text stays visible
+      // Full-page textareas: only scroll when content overflows the page
       pb.querySelectorAll('textarea:not(.chip-input)').forEach(ta => {
-        ta.addEventListener('input', () => { ta.scrollTop = ta.scrollHeight; });
+        ta.addEventListener('input', () => checkOverflow(ta));
+        // Bullet-point continuation
+        ta.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const val = ta.value;
+            const pos = ta.selectionStart;
+            const lastLine = val.substring(0, pos).split('\n').pop();
+            const bullet = lastLine.match(/^(\s*[-•*]\s)/);
+            if (bullet) {
+              e.preventDefault();
+              ta.setRangeText('\n' + bullet[1], pos, pos, 'end');
+              ta.dispatchEvent(new Event('input'));
+            }
+          }
+        });
       });
 
       // Focus input
